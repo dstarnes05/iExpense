@@ -14,7 +14,8 @@ struct AddView: View {
     @State private var type = "Personal"
     @State private var amount = 0.0
     
-    var expenses: Expenses 
+    var personalExpenses: Expenses
+    var businessExpenses: Expenses
     
     let types = ["Business", "Personal"]
     
@@ -37,11 +38,11 @@ struct AddView: View {
                 Button("Save") {
                     if type == "Personal" {
                         let item = Item(name: name, type: type, amount: amount)
-                        expenses.personalItems.append(item)
+                        personalExpenses.items.append(item)
                         dismiss()
                     } else {
                         let item = Item(name: name, type: type, amount: amount)
-                        expenses.businessItems.append(item)
+                        businessExpenses.items.append(item)
                         dismiss()
                     }
                     
@@ -52,5 +53,5 @@ struct AddView: View {
 }
 
 #Preview {
-    AddView(expenses: Expenses())
+    AddView(personalExpenses: Expenses(type: "Personal"), businessExpenses: Expenses(type: "Business"))
 }

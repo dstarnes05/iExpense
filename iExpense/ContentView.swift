@@ -16,44 +16,31 @@ struct Item: Identifiable, Codable {
 
 @Observable
 class Expenses {
-    var personalItems = [Item]() {
+    let expenseType: String
+    
+    var items = [Item]() {
         didSet {
-            if let encoded = try? JSONEncoder().encode(personalItems) {
-                UserDefaults.standard.set(encoded, forKey: "personalItems")
+            if let encoded = try? JSONEncoder().encode(items) {
+                UserDefaults.standard.set(encoded, forKey: "\(expenseType)Items")
             }
         }
     }
     
-    var businessItems = [Item]() {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(businessItems) {
-                UserDefaults.standard.set(encoded, forKey: "businessItems")
-            }
-        }
-    }
-    
-    
-    init() {
-        if let pItems = UserDefaults.standard.data(forKey: "personalItems") {
-            if let decodedItems = try? JSONDecoder().decode([Item].self, from: pItems) {
-                personalItems = decodedItems
+    init(type: String) {
+        self.expenseType = type
+        if let storedItems = UserDefaults.standard.data(forKey: "\(type)Items") {
+            if let decodedItems = try? JSONDecoder().decode([Item].self, from: storedItems) {
+                self.items = decodedItems
                 return
             }
         }
-        if let bItems = UserDefaults.standard.data(forKey: "businessItems") {
-            if let decodedItems = try? JSONDecoder().decode([Item].self, from:bItems) {
-                 businessItems = decodedItems
-                return
-            }
-        }
-        
-        personalItems = []
-        businessItems = []
+        self.items = []
     }
 }
 
 struct ContentView: View {
-    @State private var expenses = Expenses()
+    @State private var personalExpenses = Expenses(type: "Personal")
+    @State private var businessExpenses = Expenses(type: "Business")
     
     @State private var showingAddExpense = false
     
@@ -61,10 +48,12 @@ struct ContentView: View {
         NavigationStack {
             List {
                 
-                VStack {
+                Section {
                     Text("Personal Expenses")
                         .font(.title2)
-                    ForEach(expenses.personalItems) { item in
+                        .bold()
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    ForEach(personalExpenses.items) { item in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(item.name)
@@ -90,13 +79,15 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .onDelete(perform: removeItems)
+                    .onDelete(perform: removePersonalItems)
                 }
                 
-                VStack {
+                Section {
                     Text("Business Expenses")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .bold()
                         .font(.title2)
-                    ForEach(expenses.businessItems) { item in
+                    ForEach(businessExpenses.items) { item in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(item.name)
@@ -122,7 +113,7 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .onDelete(perform: removeItems)
+                    .onDelete(perform: removeBusinessItems)
                 }
             }
             .navigationTitle("iExpense")
@@ -132,13 +123,17 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingAddExpense){
-                AddView(expenses: expenses)
+                AddView(personalExpenses: personalExpenses, businessExpenses: businessExpenses)
             }
         }
     }
     
-    func removeItems(at offsets: IndexSet) {
-    expenses.businessItems.remove(atOffsets: offsets)
+    func removePersonalItems(at offsets: IndexSet) {
+        personalExpenses.items.remove(atOffsets: offsets)
+    }
+    
+    func removeBusinessItems(at offsets: IndexSet) {
+        businessExpenses.items.remove(atOffsets: offsets)
     }
 }
 
