@@ -5,44 +5,22 @@
 //  Created by Daniel Starnes on 1/24/26.
 //
 
+import SwiftData
 import SwiftUI
 
-struct Item: Identifiable, Codable {
-    var id = UUID()
-    let name: String
-    let type: String
-    let amount: Double
-}
-
-@Observable
-class Expenses {
-    let expenseType: String
-    
-    var items = [Item]() {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(items) {
-                UserDefaults.standard.set(encoded, forKey: "\(expenseType)Items")
-            }
-        }
-    }
-    
-    init(type: String) {
-        self.expenseType = type
-        if let storedItems = UserDefaults.standard.data(forKey: "\(type)Items") {
-            if let decodedItems = try? JSONDecoder().decode([Item].self, from: storedItems) {
-                self.items = decodedItems
-                return
-            }
-        }
-        self.items = []
-    }
-}
 
 struct ContentView: View {
+    @Environment(\.modelContext) var modelContext
+    
     @State private var personalExpenses = Expenses(type: "Personal")
     @State private var businessExpenses = Expenses(type: "Business")
+    @State private var sortOrder = [
+        SortDescriptor(\Item.amount),
+        SortDescriptor(\Item.name)
+    ]
     
     @State private var showingAddExpense = false
+    
     
     var body: some View {
         NavigationStack {
@@ -53,7 +31,8 @@ struct ContentView: View {
                         .font(.title2)
                         .bold()
                         .frame(maxWidth: .infinity, alignment: .center)
-                    ForEach(personalExpenses.items) { item in
+                    let sortedPersonalItems = personalExpenses.items.sorted(using: sortOrder)
+                    ForEach(sortedPersonalItems) { item in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(item.name)
@@ -87,7 +66,8 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .bold()
                         .font(.title2)
-                    ForEach(businessExpenses.items) { item in
+                    let sortedBusinessItems = businessExpenses.items.sorted(using: sortOrder)
+                    ForEach(sortedBusinessItems) { item in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(item.name)
@@ -122,16 +102,42 @@ struct ContentView: View {
                     AddView(personalExpenses: personalExpenses, businessExpenses: businessExpenses)
                         .navigationBarBackButtonHidden()
                 }
+                
+                Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                    Picker("Sort", selection: $sortOrder) {
+                        Text("Sort by Name")
+                            .tag([
+                                SortDescriptor(\Item.name),
+                                SortDescriptor(\Item.amount)
+                            ])
+                        
+                        Text("Sort by Amount")
+                            .tag([
+                                SortDescriptor(\Item.amount),
+                                SortDescriptor(\Item.name)
+                            ])
+                    }
+                }
             }
         }
     }
     
     func removePersonalItems(at offsets: IndexSet) {
-        personalExpenses.items.remove(atOffsets: offsets)
+        let sorted = personalExpenses.items.sorted(using: sortOrder)
+        
+        for index in offsets {
+            let item = sorted[index]
+            personalExpenses.items.removeAll { $0.id == item.id }
+        }
     }
     
     func removeBusinessItems(at offsets: IndexSet) {
-        businessExpenses.items.remove(atOffsets: offsets)
+        let sorted = businessExpenses.items.sorted(using: sortOrder)
+        
+        for index in offsets {
+            let item = sorted[index]
+            businessExpenses.items.removeAll { $0.id == item.id }
+        }
     }
 }
 
