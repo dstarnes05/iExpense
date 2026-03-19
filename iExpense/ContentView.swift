@@ -20,80 +20,85 @@ struct ContentView: View {
     ]
     
     @State private var showingAddExpense = false
+    @State private var showingExpenses = [true, true]
     
     
     var body: some View {
         NavigationStack {
             List {
                 
-                Section {
-                    Text("Personal Expenses")
-                        .font(.title2)
-                        .bold()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    let sortedPersonalItems = personalExpenses.items.sorted(using: sortOrder)
-                    ForEach(sortedPersonalItems) { item in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.name)
-                                    .font(.headline)
+                if showingExpenses[0] {
+                    Section {
+                        Text("Personal Expenses")
+                            .font(.title2)
+                            .bold()
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        let sortedPersonalItems = personalExpenses.items.sorted(using: sortOrder)
+                        ForEach(sortedPersonalItems) { item in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(item.name)
+                                        .font(.headline)
+                                    
+                                    Text(item.type)
+                                }
                                 
-                                Text(item.type)
-                            }
-                            
-                            Spacer()
-                            
-                            if item.amount < 10 {
-                                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .bold()
-                            }
-                            else if item.amount < 100 {
-                                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .bold()
-                                    .foregroundStyle(.orange)
-                            }
-                            else {
-                                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .foregroundStyle(.red)
+                                Spacer()
+                                
+                                if item.amount < 10 {
+                                    Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .bold()
+                                }
+                                else if item.amount < 100 {
+                                    Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .bold()
+                                        .foregroundStyle(.orange)
+                                }
+                                else {
+                                    Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .foregroundStyle(.red)
+                                }
                             }
                         }
+                        .onDelete(perform: removePersonalItems)
                     }
-                    .onDelete(perform: removePersonalItems)
                 }
                 
-                Section {
-                    Text("Business Expenses")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .bold()
-                        .font(.title2)
-                    let sortedBusinessItems = businessExpenses.items.sorted(using: sortOrder)
-                    ForEach(sortedBusinessItems) { item in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.name)
-                                    .font(.headline)
+                if showingExpenses[1] {
+                    Section {
+                        Text("Business Expenses")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .bold()
+                            .font(.title2)
+                        let sortedBusinessItems = businessExpenses.items.sorted(using: sortOrder)
+                        ForEach(sortedBusinessItems) { item in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(item.name)
+                                        .font(.headline)
+                                    
+                                    Text(item.type)
+                                }
                                 
-                                Text(item.type)
-                            }
-                            
-                            Spacer()
-                            
-                            if item.amount < 10 {
-                                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .bold()
-                            }
-                            else if item.amount < 100 {
-                                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .bold()
-                                    .foregroundStyle(.orange)
-                            }
-                            else {
-                                Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .foregroundStyle(.red)
+                                Spacer()
+                                
+                                if item.amount < 10 {
+                                    Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .bold()
+                                }
+                                else if item.amount < 100 {
+                                    Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .bold()
+                                        .foregroundStyle(.orange)
+                                }
+                                else {
+                                    Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .foregroundStyle(.red)
+                                }
                             }
                         }
+                        .onDelete(perform: removeBusinessItems)
                     }
-                    .onDelete(perform: removeBusinessItems)
                 }
             }
             .navigationTitle("iExpense")
@@ -116,6 +121,17 @@ struct ContentView: View {
                                 SortDescriptor(\Item.amount),
                                 SortDescriptor(\Item.name)
                             ])
+                    }
+                }
+                
+                Menu("Filter", systemImage: "line.horizontal.3.decrease.circle") {
+                    Picker("Filter", selection: $showingExpenses) {
+                        Text("All Expenses")
+                            .tag([true, true])
+                        Text("Business Expenses Only")
+                            .tag([false, true])
+                        Text("Personal Expenses Only")
+                            .tag([true, false])
                     }
                 }
             }
